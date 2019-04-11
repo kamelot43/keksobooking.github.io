@@ -1,0 +1,142 @@
+'use strict';
+(function () {
+  var INPUT_GUESTS_MIN = 2;
+
+  // Параметры формы
+
+  var MIN_PRICE = 0;
+  var MAX_PRICE = 1000000;
+  var MIN_TEXTFIELD = 30;
+  var MAX_TEXTFIELD = 100;
+  var STANDART_PRICE = 1000;
+
+  var TIME_REGISTRATION = ['12:00', '13:00', '14:00'];
+  var ROOMS = ['flat', 'bungalo', 'house', 'palace'];
+  var PRICE = [1000, 0, 5000, 10000];
+  var ROOMS_NUMBER = ['1', '2', '3', '100'];
+
+  var priceInput = document.querySelector('#price');
+  var formElement = document.querySelector('.notice__form');
+  var housingType = document.querySelector('#type');
+
+  var timeInInput = document.querySelector('#timein');
+  var timeOutInput = document.querySelector('#timeout');
+  var roomNumer = document.querySelector('#room_number');
+  var questsNumer = document.querySelector('#capacity');
+
+  var formOfferTitle = document.querySelector('#title');
+  var formPriceInput = document.querySelector('#price');
+
+  priceInput.value = STANDART_PRICE;
+
+  window.form = {
+    // Функция проверки текстового поля формы
+    validateTextInput: function (input, minValue, maxValue) {
+      if (input.value.length < minValue) {
+        input.setCustomValidity(
+            'Минимальная длина заголовка - ' + minValue + ' ' + 'символов'
+        );
+        input.style.borderColor = 'red';
+      } else if (input.value.length > maxValue) {
+        input.setCustomValidity(
+            'Максимальная длина заголовка - ' + maxValue + ' ' + 'символов'
+        );
+        input.style.borderColor = 'red';
+      } else {
+        input.setCustomValidity('');
+        input.style.borderColor = '';
+      }
+    },
+
+    // Функция проверки числового поля формы
+    validateNumberInput: function (input, minValue, maxValue) {
+      if (Number(input.value) < minValue) {
+        input.setCustomValidity(
+            'Минимально допустимое значение составляет - ' + minValue
+        );
+        input.style.borderColor = 'red';
+      } else if (Number(input.value) > maxValue) {
+        input.setCustomValidity(
+            'Максимально допустимое значение составляет - ' + maxValue
+        );
+        input.style.borderColor = 'red';
+      } else {
+        input.setCustomValidity('');
+        input.style.borderColor = '';
+      }
+    },
+
+    // Очистка формы после отправки
+    resetForm: function () {
+      formElement.reset();
+      formPriceInput.value = STANDART_PRICE;
+      window.fillAddress();
+      questsNumer.selectedIndex = INPUT_GUESTS_MIN;
+    }
+  };
+
+  // Динамическое изменение поля количество комнат
+  // Установить значение по умолчанию
+  questsNumer.selectedIndex = INPUT_GUESTS_MIN;
+
+  // Вспомогательная функция
+  function syncValues(element, value) {
+    element.value = value;
+  }
+
+  function syncValueWithMin(element, value) {
+    element.min = value;
+    element.value = value;
+  }
+
+  // Синхронизировать значение полей
+
+  window.synchronizeFields(
+      timeInInput,
+      timeOutInput,
+      TIME_REGISTRATION,
+      TIME_REGISTRATION,
+      syncValues
+  );
+  window.synchronizeFields(
+      timeOutInput,
+      timeInInput,
+      TIME_REGISTRATION,
+      TIME_REGISTRATION,
+      syncValues
+  );
+  window.synchronizeFields(
+      roomNumer,
+      questsNumer,
+      ROOMS_NUMBER,
+      [1, 1, 1, 0],
+      syncValues
+  );
+  window.synchronizeFields(
+      housingType,
+      priceInput,
+      ROOMS,
+      PRICE,
+      syncValueWithMin
+  );
+
+  formOfferTitle.addEventListener('input', function () {
+    window.form.validateTextInput(formOfferTitle, MIN_TEXTFIELD, MAX_TEXTFIELD);
+  });
+
+  formPriceInput.addEventListener('input', function () {
+    window.form.validateNumberInput(formPriceInput, MIN_PRICE, MAX_PRICE);
+  });
+
+  // Отправка по сети данных формы методом AJAX
+  formElement.addEventListener('submit', function (evt) {
+    window.backend.save(
+        new FormData(formElement),
+        function () {
+          window.form.resetForm(formElement);
+        },
+        window.backend.error
+    );
+    evt.preventDefault();
+  });
+})();
